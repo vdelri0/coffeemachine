@@ -12,89 +12,63 @@ Program Requirements
 on = True
 profit = 0
 
-def check_resources(option):
-    def check(option):
-        """Validate the given option returns Boolean." """
+def is_resource_sufficient(order_ingredients):
+    """Returns True when order can be made, False if ingredients are insufficient."""
+    for item in order_ingredients:
+        if order_ingredients[item] >= resources[item]:
+            print(f"Sorry there is not enough {item}.")
+            return False
+    return True
+
+def process_coins():
+    """Returns the total calculated from coins inserted."""
+    print("Please insert coins.")
+    total = int(input("How many quarters?: ")) * 0.25
+    total += int(input("How many dimes?: ")) * 0.1
+    total += int(input("How many nickles?: ")) * 0.05
+    total += int(input("How many pennies?: ")) * 0.01
+
+    return total
+
+def is_transaction_successful(money_received, drink_cost):
+    """Return True when the payment is accepted, or False if money is insufficient."""
+    if money_received >= drink_cost:
+        change = round(money_received - drink_cost, 2)
+        print(f"Here is ${change} in change.")
         global profit
-        data = MENU[option]
-        ingredients = data['ingredients'].values()
-
-        water = 0
-        milk = 0
-        coffee = 0
-
-        if option == 'espresso':
-            water, coffee = ingredients
-        elif option == 'latte' or option == 'cappuccino':
-            water, milk, coffee = ingredients
-
-        if resources['water'] - water >= 0:
-            resources['water'] -= water
-        else:
-            print(f"Sorry there is not enough water.")
-            return False
-
-        if milk:
-            if(resources['milk'] - milk >= 0):
-                resources['milk'] -= milk
-            else:
-                print(f"Sorry there is not enough milk.")
-                return False
-        if resources['coffee'] - coffee >= 0:
-            resources['coffee'] -= coffee
-        else:
-            print(f"Sorry there is not enough coffee.")
-            return False
+        profit += drink_cost
 
         return True
+    else:
+        print(f"Sorry that's not enough money. Money refunded.")
+        return False
 
-    def purchase(option):
-        """If there's enough money It will purchase"""
-        global profit
-        data = MENU[option]
-        cost = data.get('cost')
-
-        quarters = int(input("How many quarters?: "))
-        dimes = int(input("How many dimes?: "))
-        nickles = int(input("How many nickles?: "))
-        pennies = int(input("How many pennies?: "))
-
-        quarters *= 0.25
-        dimes *= 0.10
-        nickles *= 0.05
-        pennies *= 0.01
-
-        coins = quarters + dimes + nickles + pennies
-        coins -= cost
-        coins = round(coins, 2)
-
-        if coins >= 0:
-            profit += cost
-            print(f"Here is ${coins} in change.")
-            print(f"Here is your {option} Enjoy!.")
-        else:
-            print(f"Sorry that's not enough money. Money refunded.")
-
-    check = check(option)
-    if check:
-        return purchase(option)
+def make_coffee(drink_name, order_ingredients):
+    """Deduct the required ingredients from the resources."""
+    for item in order_ingredients:
+        resources[item] -= order_ingredients[item]
+    print(f"Here is your {drink_name} ☕. Enjoy!")
 
 while on:
     espresso = MENU['espresso'].get('cost')
     latte = MENU['latte'].get('cost')
     cappuccino = MENU['cappuccino'].get('cost')
 
-    option = input(f"​What would you like? (espresso ${espresso}/latte ${latte}/cappuccino ${cappuccino}): ").lower()
+    choice = input(f"​What would you like? (espresso ${espresso}/latte ${latte}/cappuccino ${cappuccino}): ").lower()
 
-    if option == 'off':
+    if choice == 'off':
         on = False
         print("I'm gonna turn off, bye bye!")
-    elif option == 'report':
+    elif choice == 'report':
         print(f"Water: {resources['water']}ml")
         print(f"Milk: {resources['milk']}ml")
         print(f"Coffee: {resources['coffee']}g")
         print(f"Money: ${profit}")
-    elif option in ('espresso', 'latte', 'cappuccino'):
-        check_resources(option)
+    elif choice in ('espresso', 'latte', 'cappuccino'):
+        drink = MENU[choice]
+        if is_resource_sufficient(drink['ingredients']):
+            payment = process_coins()
+            if is_transaction_successful(payment, drink['cost']):
+                make_coffee(choice, drink['ingredients'])
     else:
         print("Please select a valid option.")
